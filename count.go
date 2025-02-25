@@ -17,11 +17,11 @@ package main
 // the progress-animated example.
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
 	"time"
-    "flag"
 
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
@@ -34,27 +34,26 @@ const (
 )
 
 const (
-    Countdown string = "countdown"
-    Countup          = "countup"
+	Countdown string = "countdown"
+	Countup          = "countup"
 )
 
-
 var (
-    endseconds int64
-    curseconds int64
-    progressbar bool
-    fromcolour = "#0000FF"
-    tocolour = "#FF0000"
-    mode = "countup"
+	endseconds  int64
+	curseconds  int64
+	progressbar bool
+	fromcolour  = "#0000FF"
+	tocolour    = "#FF0000"
+	mode        = "countup"
 )
 
 func init() {
-    flag.Int64Var(&endseconds, "seconds", 0, "Number of seconds to count down")
-    flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
-    flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
-    flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
-    flag.StringVar(&mode, "mode", "countup", "Should the progress bar count up or down")
-    flag.Parse()
+	flag.Int64Var(&endseconds, "seconds", 0, "Number of seconds to count down")
+	flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
+	flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
+	flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
+	flag.StringVar(&mode, "mode", "countup", "Should the progress bar count up or down")
+	flag.Parse()
 }
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
@@ -62,10 +61,10 @@ var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 type tickMsg time.Time
 
 type model struct {
-	percent  float64
+	percent    float64
 	endseconds int64
 	curseconds int64
-	progress progress.Model
+	progress   progress.Model
 }
 
 func (m model) Init() tea.Cmd {
@@ -113,20 +112,20 @@ func tickCmd() tea.Cmd {
 }
 
 func main() {
-    if progressbar {
-        prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
-        mod := model{
-            progress: prog,
-            endseconds: endseconds,
-            curseconds: 0,
-        }	
+	if progressbar {
+		prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
+		mod := model{
+			progress:   prog,
+			endseconds: endseconds,
+			curseconds: 0,
+		}
 
-        if _, err := tea.NewProgram(mod).Run(); err != nil {
-            fmt.Println("Oh no!", err)
-            os.Exit(1)
-        }
-    } else {
-        fmt.Println("Here I will put a plain old ASCII countdown")
-        os.Exit(1)
-    }
+		if _, err := tea.NewProgram(mod).Run(); err != nil {
+			fmt.Println("Oh no!", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("Here I will put a plain old ASCII countdown")
+		os.Exit(1)
+	}
 }
