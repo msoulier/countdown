@@ -154,7 +154,13 @@ func tickCmd() tea.Cmd {
 	})
 }
 
+func clear() {
+    fmt.Print("\033[2J") // clear the screen - works with vt100 terminals
+    fmt.Print("\033[H") // move cursor to home
+}
+
 func main() {
+    clear()
 	if progressbar {
 		prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
 		mod := model{
