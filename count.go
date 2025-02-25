@@ -26,6 +26,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+    mlib "github.com/msoulier/mlib"
 )
 
 const (
@@ -39,7 +40,7 @@ const (
 )
 
 var (
-	endseconds  int64
+	total_seconds  int64
 	curseconds  int64
 	progressbar bool
 	fromcolour  = "#0000FF"
@@ -48,12 +49,31 @@ var (
 )
 
 func init() {
-	flag.Int64Var(&endseconds, "seconds", 0, "Number of seconds to count down")
+	flag.Int64Var(&total_seconds, "seconds", 0, "Number of seconds to count down")
 	flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
 	flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
 	flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
 	flag.StringVar(&mode, "mode", "countup", "Should the progress bar count up or down")
 	flag.Parse()
+
+    if total_seconds == 0 {
+        flag.PrintDefaults()
+        os.Exit(1)
+    }
+
+    // mode should be Countdown or Countup
+    if mode != Countdown && mode != Countup {
+        flag.PrintDefaults()
+        os.Exit(1)
+    }
+
+    if mode == Countup {
+        curseconds = 0
+    } else if mode == Countdown {
+        curseconds = total_seconds
+    } else {
+        panic("Unknown mode")
+    }
 }
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
@@ -62,7 +82,7 @@ type tickMsg time.Time
 
 type model struct {
 	percent    float64
-	endseconds int64
+	total_seconds int64
 	curseconds int64
 	progress   progress.Model
 }
@@ -84,12 +104,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tickMsg:
-		m.curseconds += 1
-		if m.curseconds >= m.endseconds {
-			m.percent = 1.0
-			return m, tea.Quit
-		}
-		m.percent = float64(m.curseconds) / float64(m.endseconds)
+        if mode == Countup {
+            m.curseconds += 1
+            if m.curseconds >= m.total_seconds {
+                m.percent = 1.0
+                return m, tea.Quit
+            }
+            m.percent = float64(m.curseconds) / float64(m.total_seconds)
+        } else if mode == Countdown {
+            m.curseconds -= 1
+            if m.curseconds == 0 {
+                m.percent = 0.0
+                return m, tea.Quit
+            }
+            m.percent = float64(m.curseconds) / float64(m.total_seconds)
+        } else {
+            panic("Unknown mode")
+        }
 
 		return m, tickCmd()
 
@@ -99,8 +130,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
+    current_duration := time.Duration(int64(time.Second) * m.curseconds)
+    total_duration := time.Duration(int64(time.Second) * m.total_seconds)
+    human_current := mlib.Duration2Human(current_duration)
+    human_total := mlib.Duration2Human(total_duration)
+    caption := ""
+    if mode == Countdown {
+        caption = fmt.Sprintf("Time remaining: %s", human_current)
+    } else if mode == Countup {
+        caption = fmt.Sprintf("Current time: %s\nUntil: %s", human_current, human_total)
+    } else {
+        panic("Unknown mode")
+    }
 	pad := strings.Repeat(" ", padding)
-	return "\n" +
+	return caption + "\n" +
 		pad + m.progress.ViewAs(m.percent) + "\n\n" +
 		pad + helpStyle("Press any key to quit")
 }
@@ -116,9 +159,16 @@ func main() {
 		prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
 		mod := model{
 			progress:   prog,
-			endseconds: endseconds,
-			curseconds: 0,
+			total_seconds: total_seconds,
+			curseconds: curseconds,
 		}
+        if mode == Countup {
+            mod.percent = 0
+        } else if mode == Countdown {
+            mod.percent = 100
+        } else {
+            panic("Unknown mode")
+        }
 
 		if _, err := tea.NewProgram(mod).Run(); err != nil {
 			fmt.Println("Oh no!", err)

@@ -8,7 +8,7 @@ fmt:
 	goimports -w *.go
 	gofmt -w *.go
 
-count:
+count: count.go
 	go build -o count count.go
 
 build: count
