@@ -132,8 +132,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
     current_duration := time.Duration(int64(time.Second) * m.curseconds)
     total_duration := time.Duration(int64(time.Second) * m.total_seconds)
-    human_current := mlib.Duration2Human(current_duration)
-    human_total := mlib.Duration2Human(total_duration)
+    human_current := mlib.Duration2Human(current_duration, true)
+    human_total := mlib.Duration2Human(total_duration, true)
     caption := ""
     if mode == Countdown {
         caption = fmt.Sprintf("Time remaining: %s", human_current)
