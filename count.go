@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 	"time"
+    "flag"
 
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
@@ -32,12 +33,38 @@ const (
 	maxWidth = 80
 )
 
+const (
+    Countdown string = "countdown"
+    Countup          = "countup"
+)
+
+
+var (
+    endseconds int64
+    curseconds int64
+    progressbar bool
+    fromcolour = "#0000FF"
+    tocolour = "#FF0000"
+    mode = "countup"
+)
+
+func init() {
+    flag.Int64Var(&endseconds, "seconds", 0, "Number of seconds to count down")
+    flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
+    flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
+    flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
+    flag.StringVar(&mode, "mode", "countup", "Should the progress bar count up or down")
+    flag.Parse()
+}
+
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 
 type tickMsg time.Time
 
 type model struct {
 	percent  float64
+	endseconds int64
+	curseconds int64
 	progress progress.Model
 }
 
@@ -58,11 +85,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tickMsg:
-		m.percent += 0.10
-		if m.percent > 1.0 {
+		m.curseconds += 1
+		if m.curseconds >= m.endseconds {
 			m.percent = 1.0
 			return m, tea.Quit
 		}
+		m.percent = float64(m.curseconds) / float64(m.endseconds)
+
 		return m, tickCmd()
 
 	default:
@@ -84,10 +113,20 @@ func tickCmd() tea.Cmd {
 }
 
 func main() {
-	prog := progress.New(progress.WithScaledGradient("#FF7CCB", "#FDFF8C"))
+    if progressbar {
+        prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
+        mod := model{
+            progress: prog,
+            endseconds: endseconds,
+            curseconds: 0,
+        }	
 
-	if _, err := tea.NewProgram(model{progress: prog}).Run(); err != nil {
-		fmt.Println("Oh no!", err)
-		os.Exit(1)
-	}
+        if _, err := tea.NewProgram(mod).Run(); err != nil {
+            fmt.Println("Oh no!", err)
+            os.Exit(1)
+        }
+    } else {
+        fmt.Println("Here I will put a plain old ASCII countdown")
+        os.Exit(1)
+    }
 }
