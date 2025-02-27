@@ -32,6 +32,16 @@ import (
 const (
 	padding  = 2
 	maxWidth = 80
+    Reset = "\033[0m"
+    Red = "\033[31m"
+    Green = "\033[32m"
+    Yellow = "\033[33m"
+    Blue = "\033[34m"
+    Purple = "\033[35m"
+    Cyan = "\033[36m"
+    Gray = "\033[37m"
+    White = "\033[97m"
+    width = 70
 )
 
 const (
@@ -46,6 +56,7 @@ var (
 	fromcolour  = "#0000FF"
 	tocolour    = "#FF0000"
 	mode        = "countup"
+    helpStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 )
 
 func init() {
@@ -53,7 +64,7 @@ func init() {
 	flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
 	flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
 	flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
-	flag.StringVar(&mode, "mode", "countup", "Should the progress bar count up or down")
+	flag.StringVar(&mode, "mode", "countdown", "Should the progress bar count up or down")
 	flag.Parse()
 
     if total_seconds == 0 {
@@ -76,7 +87,21 @@ func init() {
     }
 }
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+func telltime() {
+	fmt.Printf("\r")
+	now := time.Now().UTC()
+	year := now.Local().Year()
+	next_year := year + 1
+	newyears := time.Date(next_year, time.January, 1, 0, 0, 0, 0, time.Local)
+	diff := newyears.Sub(now)
+	printstring := fmt.Sprintf("Countdown: %s until %d", mlib.Duration2Human(diff, false), next_year)
+	finalstring := printstring[:]
+	if len(printstring) > width {
+		finalstring = printstring[:width]
+	}
+	format := fmt.Sprintf("%%s%%%ds%%s", width)
+	fmt.Printf(format, Purple, finalstring, Reset)
+}
 
 type tickMsg time.Time
 
