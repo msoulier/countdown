@@ -50,24 +50,41 @@ const (
 )
 
 var (
-	total_seconds int64
-	curseconds    int64
-	progressbar   bool
-	fromcolour    = "#0000FF"
-	tocolour      = "#FF0000"
-	mode          = "countup"
-	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+	from        int64
+	seconds     int64
+	minutes     int64
+	hours       int64
+	description string
+	until       string
+	curseconds  int64
+	progressbar bool
+	fromcolour  = "#0000FF"
+	tocolour    = "#FF0000"
+	mode        = "countup"
+	helpStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 )
 
 func init() {
-	flag.Int64Var(&total_seconds, "seconds", 0, "Number of seconds to count down")
+	flag.Int64Var(&seconds, "seconds", 0, "Number of seconds to count down")
+	flag.Int64Var(&minutes, "minutes", 0, "Number of minutes to count down")
+	flag.Int64Var(&hours, "hours", 0, "Number of hours to count down")
 	flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
 	flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
 	flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
 	flag.StringVar(&mode, "mode", "countdown", "Should the progress bar count up or down")
+	flag.StringVar(&description, "description", "", "Description of what happens when the count is done")
+	flag.StringVar(&until, "until", "", "Countup/down until time (HH:MM:SS)")
 	flag.Parse()
 
-	if total_seconds == 0 {
+	from = seconds + minutes*60 + hours*3600
+
+    if until != "" {
+        fmt.Fprintf(os.Stderr, "I'm sorry, but --until functionality is still in development.\n")
+        flag.PrintDefaults()
+		os.Exit(1)
+    }
+
+	if from == 0 {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -81,7 +98,7 @@ func init() {
 	if mode == Countup {
 		curseconds = 0
 	} else if mode == Countdown {
-		curseconds = total_seconds
+		curseconds = from
 	} else {
 		panic("Unknown mode")
 	}
@@ -106,10 +123,10 @@ func telltime() {
 type tickMsg time.Time
 
 type model struct {
-	percent       float64
-	total_seconds int64
-	curseconds    int64
-	progress      progress.Model
+	percent    float64
+	from       int64
+	curseconds int64
+	progress   progress.Model
 }
 
 func (m model) Init() tea.Cmd {
@@ -131,18 +148,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		if mode == Countup {
 			m.curseconds += 1
-			if m.curseconds >= m.total_seconds {
+			if m.curseconds >= m.from {
 				m.percent = 1.0
 				return m, tea.Quit
 			}
-			m.percent = float64(m.curseconds) / float64(m.total_seconds)
+			m.percent = float64(m.curseconds) / float64(m.from)
 		} else if mode == Countdown {
 			m.curseconds -= 1
 			if m.curseconds == 0 {
 				m.percent = 0.0
 				return m, tea.Quit
 			}
-			m.percent = float64(m.curseconds) / float64(m.total_seconds)
+			m.percent = float64(m.curseconds) / float64(m.from)
 		} else {
 			panic("Unknown mode")
 		}
@@ -156,14 +173,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	current_duration := time.Duration(int64(time.Second) * m.curseconds)
-	total_duration := time.Duration(int64(time.Second) * m.total_seconds)
+	total_duration := time.Duration(int64(time.Second) * m.from)
 	human_current := mlib.Duration2Human(current_duration, true)
 	human_total := mlib.Duration2Human(total_duration, true)
 	caption := ""
 	if mode == Countdown {
-		caption = fmt.Sprintf("Time remaining: %s", human_current)
+        extra := ""
+        if description != "" {
+            extra = " until " + description
+        }
+		caption = fmt.Sprintf("Time remaining%s: %s", extra, human_current)
 	} else if mode == Countup {
-		caption = fmt.Sprintf("Current time: %s\nUntil: %s", human_current, human_total)
+        extra := ""
+        if description != "" {
+            extra = " " + description
+        }
+		caption = fmt.Sprintf("Current time: %s\nUntil%s: %s", extra, human_current, human_total)
 	} else {
 		panic("Unknown mode")
 	}
@@ -189,9 +214,9 @@ func main() {
 	if progressbar {
 		prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
 		mod := model{
-			progress:      prog,
-			total_seconds: total_seconds,
-			curseconds:    curseconds,
+			progress:   prog,
+			from:       from,
+			curseconds: curseconds,
 		}
 		if mode == Countup {
 			mod.percent = 0
