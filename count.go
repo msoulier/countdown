@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"path"
 
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
@@ -50,7 +51,7 @@ const (
 )
 
 var (
-	from        int64
+	from        time.Duration
 	seconds     int64
 	minutes     int64
 	hours       int64
@@ -62,6 +63,11 @@ var (
 	tocolour    = "#FF0000"
 	mode        = "countup"
 	helpStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+	endtime     time.Time
+	now         time.Time
+	debug       bool
+	logfile     *os.File = nil
+	logpath     string
 )
 
 func init() {
@@ -74,9 +80,20 @@ func init() {
 	flag.StringVar(&mode, "mode", "countdown", "Should the progress bar count up or down")
 	flag.StringVar(&description, "description", "", "Description of what happens when the count is done")
 	flag.StringVar(&until, "until", "", "Countup/down until time (HH:MM:SS)")
+	flag.BoolVar(&debug, "debug", false, "Enable debug logging to $HOME/count.log")
 	flag.Parse()
 
-	from = seconds + minutes*60 + hours*3600
+	var err error
+	if (debug) {
+		logpath = path.Join(os.Getenv("HOME"), "count.log")
+		logfile, err = os.OpenFile(logpath, os.O_RDWR | os.O_CREATE, 0600)
+		if err != nil {
+			panic(err)
+		}
+		debuglog("Starting count")
+	}
+
+	from = time.Duration(int64(time.Second) * (seconds + minutes*60 + hours*3600))
 
     if until != "" {
         fmt.Fprintf(os.Stderr, "I'm sorry, but --until functionality is still in development.\n")
@@ -95,12 +112,28 @@ func init() {
 		os.Exit(1)
 	}
 
+	// compute endtime so we always have a reference of when we are done
+	now = time.Now()
+	endtime = now.Add(from)
+
+	debuglog("now is %s", now)
+	debuglog("endtime is %s", endtime)
+
 	if mode == Countup {
 		curseconds = 0
 	} else if mode == Countdown {
-		curseconds = from
+		curseconds = int64( from/time.Second )
 	} else {
 		panic("Unknown mode")
+	}
+}
+
+func debuglog(format string, args ...interface{}) {
+	if (logfile == nil) {
+		return
+	} else {
+		fmt.Fprintf(logfile, format, args...)
+		fmt.Fprintf(logfile, "\n")
 	}
 }
 
@@ -124,7 +157,8 @@ type tickMsg time.Time
 
 type model struct {
 	percent    float64
-	from       int64
+	from       time.Duration
+	fromseconds int64
 	curseconds int64
 	progress   progress.Model
 }
@@ -146,13 +180,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tickMsg:
+		// tickMsg should be the current time, no?
+		now = time.Time(msg)
+		// FIXME: what about the global from?
+		m.from = endtime.Sub(now)
 		if mode == Countup {
 			m.curseconds += 1
-			if m.curseconds >= m.from {
+			if m.curseconds >= int64( m.from*time.Second ) {
 				m.percent = 1.0
 				return m, tea.Quit
 			}
-			m.percent = float64(m.curseconds) / float64(m.from)
+			m.percent = float64(m.curseconds) / float64(m.from*time.Second)
 		} else if mode == Countdown {
 			m.curseconds -= 1
 			if m.curseconds == 0 {
@@ -173,9 +211,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	current_duration := time.Duration(int64(time.Second) * m.curseconds)
-	total_duration := time.Duration(int64(time.Second) * m.from)
 	human_current := mlib.Duration2Human(current_duration, true)
-	human_total := mlib.Duration2Human(total_duration, true)
+	human_total := mlib.Duration2Human(m.from, true)
 	caption := ""
 	if mode == Countdown {
         extra := ""
@@ -216,8 +253,10 @@ func main() {
 		mod := model{
 			progress:   prog,
 			from:       from,
+			fromseconds: int64( from/time.Second ),
 			curseconds: curseconds,
 		}
+		debuglog(fmt.Sprintf("fromseconds is %d, curseconds is %d", mod.fromseconds, mod.curseconds))
 		if mode == Countup {
 			mod.percent = 0
 		} else if mode == Countdown {
