@@ -65,15 +65,15 @@ var (
 )
 
 func init() {
-	flag.Int64Var(&seconds, "seconds", 0, "Number of seconds to count down")
-	flag.Int64Var(&minutes, "minutes", 0, "Number of minutes to count down")
-	flag.Int64Var(&hours, "hours", 0, "Number of hours to count down")
+	flag.Int64Var(&seconds, "s", 0, "Number of seconds to count down")
+	flag.Int64Var(&minutes, "m", 0, "Number of minutes to count down")
+	flag.Int64Var(&hours, "h", 0, "Number of hours to count down")
 	flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
 	flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
 	flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
 	flag.StringVar(&description, "description", "", "Description of what happens when the count is done")
-	flag.StringVar(&until, "until", "", "Countup/down until time (HH:MM:SS)")
-	flag.BoolVar(&debug, "debug", false, "Enable debug logging to $HOME/countdown.log")
+	flag.StringVar(&until, "u", "", "Countup/down until time (HH:MM:SS)")
+	flag.BoolVar(&debug, "d", false, "Enable debug logging to $HOME/countdown.log")
 	flag.Parse()
 
 	var err error
