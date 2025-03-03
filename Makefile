@@ -1,14 +1,14 @@
 .PHONY: help fmt build
 
-build: count
+build: countdown
 
 help:
 	@echo "Targets:"
-	@echo "    help fmt count build (build everything)"
+	@echo "    help fmt countdown build (build everything)"
 
 fmt:
 	goimports -w *.go
 	gofmt -w *.go
 
-count: count.go
-	go build -o count count.go
+countdown: countdown.go
+	go build -o countdown countdown.go
