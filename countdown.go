@@ -20,9 +20,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"time"
-	"path"
 
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
@@ -46,22 +46,22 @@ const (
 )
 
 var (
-	count_duration time.Duration
+	count_duration     time.Duration
 	remaining_duration time.Duration
-	seconds     int64
-	minutes     int64
-	hours       int64
-	description string
-	until       string
-	progressbar bool
-	fromcolour  = "#0000FF"
-	tocolour    = "#FF0000"
-	helpStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
-	endtime     time.Time
-	now         time.Time
-	debug       bool
-	logfile     *os.File = nil
-	logpath     string
+	seconds            int64
+	minutes            int64
+	hours              int64
+	description        string
+	until              string
+	progressbar        bool
+	fromcolour         = "#0000FF"
+	tocolour           = "#FF0000"
+	helpStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+	endtime            time.Time
+	now                time.Time
+	debug              bool
+	logfile            *os.File = nil
+	logpath            string
 )
 
 func init() {
@@ -77,9 +77,9 @@ func init() {
 	flag.Parse()
 
 	var err error
-	if (debug) {
+	if debug {
 		logpath = path.Join(os.Getenv("HOME"), "countdown.log")
-		logfile, err = os.OpenFile(logpath, os.O_RDWR | os.O_CREATE, 0600)
+		logfile, err = os.OpenFile(logpath, os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil {
 			panic(err)
 		}
@@ -89,11 +89,11 @@ func init() {
 	count_duration = time.Duration(int64(time.Second) * (seconds + minutes*60 + hours*3600))
 	remaining_duration = count_duration
 
-    if until != "" {
-        fmt.Fprintf(os.Stderr, "I'm sorry, but --until functionality is still in development.\n")
-        flag.PrintDefaults()
+	if until != "" {
+		fmt.Fprintf(os.Stderr, "I'm sorry, but --until functionality is still in development.\n")
+		flag.PrintDefaults()
 		os.Exit(1)
-    }
+	}
 
 	if remaining_duration == 0 {
 		flag.PrintDefaults()
@@ -109,7 +109,7 @@ func init() {
 }
 
 func debuglog(format string, args ...interface{}) {
-	if (logfile == nil) {
+	if logfile == nil {
 		return
 	} else {
 		fmt.Fprintf(logfile, format, args...)
@@ -136,9 +136,9 @@ func telltime() {
 type tickMsg time.Time
 
 type model struct {
-	percent    float64
+	percent            float64
 	remaining_duration time.Duration
-	progress   progress.Model
+	progress           progress.Model
 }
 
 func (m model) Init() tea.Cmd {
@@ -166,7 +166,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		debuglog("now is %v, endtime is %v", now, endtime)
 
-  		if now.Before(endtime) {
+		if now.Before(endtime) {
 			debuglog("now is < endtime, we are still counting")
 			// Then we're still counting.
 			m.percent = float64(m.remaining_duration) / float64(count_duration)
@@ -220,9 +220,9 @@ func main() {
 	if progressbar {
 		prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
 		mod := model{
-			progress:   prog,
+			progress:           prog,
 			remaining_duration: remaining_duration,
-			percent: 0.0,
+			percent:            0.0,
 		}
 		mod.percent = 0
 
