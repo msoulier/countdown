@@ -224,7 +224,7 @@ func main() {
 			remaining_duration: remaining_duration,
 			percent:            0.0,
 		}
-		mod.percent = 0
+		mod.percent = 1.0
 
 		if _, err := tea.NewProgram(mod).Run(); err != nil {
 			fmt.Println("Oh no!", err)
