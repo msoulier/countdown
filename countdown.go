@@ -144,7 +144,6 @@ func parse_until(until string) (time.Time, error) {
 		0,
 		current_time.Location())
 
-
 	return endtime, nil
 }
 
@@ -263,11 +262,14 @@ func ascii_timer() {
 		}
 		remaining_duration := endtime.Sub(now)
 		stamp := mlib.Duration2Human(remaining_duration, false, true)
+		chars := len(stamp)
 		fmt.Printf("%s", stamp)
 		time.Sleep(time.Second)
 		fmt.Printf("\r")
-        fmt.Printf("%78s", " ")
-        fmt.Printf("\r")
+		for _ = range chars {
+			fmt.Print(" ")
+		}
+		fmt.Printf("\r")
 	}
 }
 
