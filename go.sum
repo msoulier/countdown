@@ -24,6 +24,8 @@ github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6T
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
 github.com/msoulier/mlib v0.0.0-20250225165846-e2dc87494c2f h1:f2olQuvUzQ5DvHnCL+PLtCneeme+J07U2A4hHNBTP5c=
 github.com/msoulier/mlib v0.0.0-20250225165846-e2dc87494c2f/go.mod h1:ZJwce8blqZ5hrUvpeQcgc2CM1gZMOc11dOmUVpbx7YQ=
+github.com/msoulier/mlib v0.0.0-20250304162327-32bef9cebc7b h1:KIU3N1VDR/YLGkuFI6OVHSh4D2B2tS12C9YyOF81LZM=
+github.com/msoulier/mlib v0.0.0-20250304162327-32bef9cebc7b/go.mod h1:ZJwce8blqZ5hrUvpeQcgc2CM1gZMOc11dOmUVpbx7YQ=
 github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 h1:ZK8zHtRHOkbHy6Mmr5D264iyp3TiX5OmNcI5cIARiQI=
 github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6/go.mod h1:CJlz5H+gyd6CUWT45Oy4q24RdLyn7Md9Vj2/ldJBSIo=
 github.com/muesli/cancelreader v0.2.2 h1:3I4Kt4BQjOR54NavqnDogx/MIoWBFa0StPA8ELUXHmA=

@@ -164,7 +164,7 @@ func telltime() {
 	next_year := year + 1
 	newyears := time.Date(next_year, time.January, 1, 0, 0, 0, 0, time.Local)
 	diff := newyears.Sub(now)
-	printstring := fmt.Sprintf("Countdown: %s until %d", mlib.Duration2Human(diff, false), next_year)
+	printstring := fmt.Sprintf("Countdown: %s until %d", mlib.Duration2Human(diff, false, false), next_year)
 	finalstring := printstring[:]
 	if len(printstring) > width {
 		finalstring = printstring[:width]
@@ -229,8 +229,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	now = time.Now()
 	current_duration := endtime.Sub(now)
-	human_current := mlib.Duration2Human(current_duration, true)
-	//human_total := mlib.Duration2Human(m.count_duration, true)
+	human_current := mlib.Duration2Human(current_duration, true, false)
+	//human_total := mlib.Duration2Human(m.count_duration, true, false)
 	caption := ""
 
 	extra := ""
@@ -262,10 +262,12 @@ func ascii_timer() {
 			break
 		}
 		remaining_duration := endtime.Sub(now)
-		stamp := mlib.Duration2Human(remaining_duration, true)
-		fmt.Printf("%20s", stamp)
+		stamp := mlib.Duration2Human(remaining_duration, false, true)
+		fmt.Printf("%s", stamp)
 		time.Sleep(time.Second)
 		fmt.Printf("\r")
+        fmt.Printf("%78s", " ")
+        fmt.Printf("\r")
 	}
 }
 
