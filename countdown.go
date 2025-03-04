@@ -255,6 +255,20 @@ func clear() {
 	fmt.Print("\033[H")  // move cursor to home
 }
 
+func ascii_timer() {
+	for {
+		now := time.Now()
+		if !now.Before(endtime) {
+			break
+		}
+		remaining_duration := endtime.Sub(now)
+		stamp := mlib.Duration2Human(remaining_duration, true)
+		fmt.Printf("%20s", stamp)
+		time.Sleep(time.Second)
+		fmt.Printf("\r")
+	}
+}
+
 func main() {
 	clear()
 	if prog {
@@ -271,7 +285,6 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		fmt.Println("Here I will put a plain old ASCII countdown")
-		os.Exit(1)
+		ascii_timer()
 	}
 }
