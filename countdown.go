@@ -86,11 +86,6 @@ func init() {
 		debuglog("Starting count")
 	}
 
-	if remaining_duration == 0 && until == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
 	now = time.Now()
 	if until != "" {
 		// Temporary hack. Ignore the argument and set it to now +1min for testing.
@@ -112,6 +107,11 @@ func init() {
 		remaining_duration = count_duration
 		// compute endtime so we always have a reference of when we are done
 		endtime = now.Add(count_duration)
+	}
+
+	if remaining_duration == 0 {
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
 
 	debuglog("now is %s", now)
