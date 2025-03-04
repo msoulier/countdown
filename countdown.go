@@ -53,7 +53,7 @@ var (
 	hours              int64
 	description        string
 	until              string
-	progressbar        bool
+	prog               bool
 	fromcolour         = "#0000FF"
 	tocolour           = "#FF0000"
 	helpStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
@@ -68,7 +68,7 @@ func init() {
 	flag.Int64Var(&seconds, "s", 0, "Number of seconds to count down")
 	flag.Int64Var(&minutes, "m", 0, "Number of minutes to count down")
 	flag.Int64Var(&hours, "h", 0, "Number of hours to count down")
-	flag.BoolVar(&progressbar, "prog", true, "Display an in-colour progress bar")
+	flag.BoolVar(&prog, "prog", false, "Display an in-colour progress bar")
 	flag.StringVar(&fromcolour, "fromcolour", "#0000FF", "Left-hand colour of gradient")
 	flag.StringVar(&tocolour, "tocolour", "#FF0000", "Right-hand colour of gradient")
 	flag.StringVar(&description, "description", "", "Description of what happens when the count is done")
@@ -86,26 +86,66 @@ func init() {
 		debuglog("Starting count")
 	}
 
-	count_duration = time.Duration(int64(time.Second) * (seconds + minutes*60 + hours*3600))
-	remaining_duration = count_duration
-
-	if until != "" {
-		fmt.Fprintf(os.Stderr, "I'm sorry, but --until functionality is still in development.\n")
+	if remaining_duration == 0 && until == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	if remaining_duration == 0 {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	// compute endtime so we always have a reference of when we are done
 	now = time.Now()
-	endtime = now.Add(count_duration)
+	if until != "" {
+		// Temporary hack. Ignore the argument and set it to now +1min for testing.
+		endtime, err = parse_until(until)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Bad until time: %s\n", err)
+			fmt.Fprintf(os.Stderr, "Must be in format HH:MM:SS or a full RFC 3339 date/time stamp\n")
+			os.Exit(1)
+		}
+		count_duration = endtime.Sub(now)
+		if count_duration < 0 {
+			fmt.Fprintf(os.Stderr, "That time is in the past.\n")
+			os.Exit(1)
+		}
+		debuglog("endtime %s, count_duration %s", endtime, count_duration)
+		remaining_duration = count_duration
+	} else {
+		count_duration = time.Duration(int64(time.Second) * (seconds + minutes*60 + hours*3600))
+		remaining_duration = count_duration
+		// compute endtime so we always have a reference of when we are done
+		endtime = now.Add(count_duration)
+	}
 
 	debuglog("now is %s", now)
 	debuglog("endtime is %s", endtime)
+}
+
+func parse_until(until string) (time.Time, error) {
+	format := time.TimeOnly
+	parsed_time, err := time.Parse(format, until)
+	if err != nil {
+		// Lets try a full date format
+		format = time.RFC3339
+		parsed_time, err = time.Parse(format, until)
+		if err != nil {
+			return time.Now(), err
+		}
+		return parsed_time, nil
+	}
+	current_time := time.Now()
+
+	// Replace the hours, minutes, and seconds from the parsed time,
+	// keeping the date and other parts from the current time
+	endtime := time.Date(
+		current_time.Year(),
+		current_time.Month(),
+		current_time.Day(),
+		parsed_time.Hour(),
+		parsed_time.Minute(),
+		parsed_time.Second(),
+		0,
+		current_time.Location())
+
+
+	return endtime, nil
 }
 
 func debuglog(format string, args ...interface{}) {
@@ -217,7 +257,7 @@ func clear() {
 
 func main() {
 	clear()
-	if progressbar {
+	if prog {
 		prog := progress.New(progress.WithScaledGradient(fromcolour, tocolour))
 		mod := model{
 			progress:           prog,
