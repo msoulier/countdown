@@ -62,6 +62,7 @@ var (
 	debug              bool
 	logfile            *os.File = nil
 	logpath            string
+    compact            bool
 )
 
 func init() {
@@ -74,6 +75,7 @@ func init() {
 	flag.StringVar(&description, "description", "", "Description of what happens when the count is done")
 	flag.StringVar(&until, "u", "", "Countup/down until time (HH:MM:SS)")
 	flag.BoolVar(&debug, "d", false, "Enable debug logging to $HOME/countdown.log")
+	flag.BoolVar(&compact, "c", false, "Compact time view")
 	flag.Parse()
 
 	var err error
@@ -228,7 +230,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	now = time.Now()
 	current_duration := endtime.Sub(now)
-	human_current := mlib.Duration2Human(current_duration, true, false)
+    human_current := ""
+    if compact {
+        human_current = mlib.Duration2Human(current_duration, false, true)
+    } else {
+        human_current = mlib.Duration2Human(current_duration, true, false)
+        if until != "" {
+            human_current += " until " + endtime.Format("15:04:05")
+        }
+    }
 	//human_total := mlib.Duration2Human(m.count_duration, true, false)
 	caption := ""
 
@@ -261,7 +271,15 @@ func ascii_timer() {
 			break
 		}
 		remaining_duration := endtime.Sub(now)
-		stamp := mlib.Duration2Human(remaining_duration, false, true)
+        stamp := ""
+        if compact {
+            stamp = mlib.Duration2Human(remaining_duration, false, true)
+        } else {
+            stamp = mlib.Duration2Human(remaining_duration, true, false)
+            if until != "" {
+                stamp += " until " + endtime.Format("15:04:05")
+            }
+        }
 		chars := len(stamp)
 		fmt.Printf("%s", stamp)
 		time.Sleep(time.Second)
